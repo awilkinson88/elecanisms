@@ -4,7 +4,7 @@ These directions are for Mac OS X. Works on OS X 10.11.x (El Capitan).
 
 ## Dependencies
 
-- [XC16 Microchip compiler for Mac](http://www.microchip.com/mplabxc16osxp)
+- [XC16 Microchip compiler for Mac](http://www.microchip.com/mplabxc16osx)
 - [Homebrew](http://brew.sh)
 	+ `python` (Homebrew version)
 		* `pyusb`
