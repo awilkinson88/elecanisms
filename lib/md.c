@@ -50,11 +50,11 @@ void md_init() {
     md.pins[2] = 5;
     md.pins[3] = 6;
 
-    oc_pwm(&oc7, &D[md.pins[0]], &timer4, 1e3, 0);
-    oc_pwm(&oc8, &D[md.pins[1]], &timer4, 1e3, 0);
+    oc_pwm(&oc7, &D[md.pins[0]], NULL, 1e3, 0);
+    oc_pwm(&oc8, &D[md.pins[1]], NULL, 1e3, 0);
     
-    oc_pwm(&oc5, &D[md.pins[2]], &timer5, 1e3, 0);
-    oc_pwm(&oc6, &D[md.pins[3]], &timer5, 1e3, 0);
+    oc_pwm(&oc5, &D[md.pins[2]], NULL, 1e3, 0);
+    oc_pwm(&oc6, &D[md.pins[3]], NULL, 1e3, 0);
 }
 
 void md_free() {
