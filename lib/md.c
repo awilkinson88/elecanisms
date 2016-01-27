@@ -50,15 +50,11 @@ void md_init() {
     md.m2pins[0] = 5;
     md.m2pins[1] = 6;
 
-    pin_digitalOut(&D[md.m1pins[0]]);
-    pin_digitalOut(&D[md.m1pins[1]]);
-    pin_clear(&D[md.m1pins[0]]);
-    pin_clear(&D[md.m1pins[1]]);
+    oc_pwm(&oc7, &D[md.m1pins[0]], &timer4, 1e3, 0);
+    oc_pwm(&oc8, &D[md.m1pins[1]], &timer4, 1e3, 0);
     
-    pin_digitalOut(&D[md.m2pins[0]]);
-    pin_digitalOut(&D[md.m2pins[1]]);
-    pin_clear(&D[md.m2pins[0]]);
-    pin_clear(&D[md.m2pins[1]]);
+    oc_pwm(&oc5, &D[md.m2pins[0]], &timer5, 1e3, 0);
+    oc_pwm(&oc6, &D[md.m2pins[1]], &timer5, 1e3, 0);
 }
 
 void md_free() {
@@ -70,7 +66,7 @@ void md_speed(uint16_t motor, uint16_t speed) {
     if (motor == 1) {
         md.m1speed = speed;
 
-        pin_set(&D[md.m1pins[md.m1dir]]);
+        pin_write(&D[md.m1pins[md.m1dir]], speed);
     }
 }
 
