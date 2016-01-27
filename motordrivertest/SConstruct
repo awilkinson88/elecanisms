@@ -18,6 +18,7 @@ env.Program('test', ['test.c',
                       '../lib/timer.c',
                       '../lib/ui.c',
                       '../lib/oc.c',
+                      '../lib/md.c',
                       '../lib/pin.c'])
 env.Hex('test')
 env.List('test')
