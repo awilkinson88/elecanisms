@@ -34,15 +34,10 @@
 void init_md(void);
 
 typedef struct {
-    uint16_t m1dir;
-    uint16_t m1speed;
-    uint16_t m1freq;
-    uint16_t m1pins[2];
-
-    uint16_t m2dir;
-    uint16_t m2speed;
-    uint16_t m2freq;
-    uint16_t m2pins[2];
+    uint16_t dir[2];
+    uint16_t speed[2];
+    uint16_t freq[2];
+    uint16_t pins[4];
 } _MD;
 
 void md_init();
