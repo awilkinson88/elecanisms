@@ -45,13 +45,11 @@ typedef struct {
     uint16_t m2pins[2];
 } _MD;
 
-extern _MD md;
+void md_init();
+void md_free();
 
-void md_init(_MD *self);
-void md_free(_MD *self);
-
-void md_speed(_MD *self, uint16_t motor, uint16_t speed);
-void md_direction(_MD *self, uint16_t motor, uint16_t dir);
-void md_velocity(_MD *self, uint16_t motor, uint16_t speed, uint16_t dir);
+void md_speed(uint16_t motor, uint16_t speed);
+void md_direction(uint16_t motor, uint16_t dir);
+void md_velocity(uint16_t motor, uint16_t speed, uint16_t dir);
 
 #endif
