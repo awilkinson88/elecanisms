@@ -45,6 +45,8 @@ typedef struct {
     uint16_t m2pins[2];
 } _MD;
 
+extern _MD md;
+
 void md_init(_MD *self);
 void md_free(_MD *self);
 
