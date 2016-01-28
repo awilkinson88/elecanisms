@@ -34,7 +34,7 @@
 void init_md(void);
 
 typedef struct {
-    uint16_t dir;
+    uint8_t dir;
     uint16_t speed;
     uint16_t freq;
     uint16_t pins[2];
@@ -47,7 +47,7 @@ void md_init(_MD *self, uint16_t pin1, uint16_t pin2, uint16_t freq, _OC *oc);
 void md_free();
 
 void md_speed(_MD *self, uint16_t speed);
-void md_direction(_MD *self, uint16_t dir);
+void md_direction(_MD *self, uint8_t dir);
 void md_velocity(_MD *self, uint16_t speed, uint16_t dir);
 
 #endif

@@ -27,8 +27,8 @@ int16_t main(void) {
             timer_lower(&timer1);
             direction = !direction;
 
-            md_direction(&md1, direction);
             md_speed(&md1, 0x8000);
+            md_direction(&md1, direction);
         }
     }
 }

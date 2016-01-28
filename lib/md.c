@@ -42,12 +42,14 @@ void md_init(_MD *self, uint16_t pin1, uint16_t pin2, uint16_t freq, _OC *oc) {
     self->dir = 0;
     self->speed = 0;
     self->freq = freq;
-    self->pins[0] = 7;
-    self->pins[1] = 8;
+    self->pins[0] = pin1;
+    self->pins[1] = pin2;
     self->oc = oc;
 
-    oc_pwm(oc, &D[self->pins[0]], NULL, freq, 0);
+    pin_digitalOut(&D[self->pins[0]]);
     pin_digitalOut(&D[self->pins[1]]);
+
+    oc_pwm(self->oc, &D[self->pins[0]], NULL, freq, 0);
     pin_clear(&D[self->pins[1]]);
 }
 
@@ -63,20 +65,16 @@ void md_speed(_MD *self, uint16_t speed) {
 }
 
 // changes direction, speed unchanged
-void md_direction(_MD *self, uint16_t dir) {
+void md_direction(_MD *self, uint8_t dir) {
     if (self->dir == dir) {
         return;
     }
     self->dir = dir;
 
-    uint16_t tmp_dir = pin_read(&D[self->pins[dir]]);
-    uint16_t tmp_ndir = pin_read(&D[self->pins[!dir]]);
+    oc_free(self->oc);
+    oc_pwm(self->oc, &D[self->pins[dir]], NULL, self->freq, self->speed);
 
-    oc_pwm(self->oc, &D[self->pins[!dir]], NULL, self->freq, 0);
-    pin_digitalOut(&D[self->pins[dir]]);
-
-    pin_write(&D[self->pins[dir]], tmp_ndir);
-    pin_write(&D[self->pins[!dir]], tmp_dir);
+    pin_clear(&D[self->pins[!dir]]);
 }
 
 // changes speed and direction
