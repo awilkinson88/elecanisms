@@ -27,66 +27,53 @@
 #include "common.h"
 #include "md.h"
 
-_MD md;
+_MD md1, md2;
 
 void init_md(void) {
-    md_init();
+    md_init(&md1, 7, 8, &oc7, &oc8);
+    md_init(&md2, 5, 6, &oc5, &oc6);
 }
 
 // dir == 0 means
 // pin[0] is active, pin[1] is 0
 // dir == 1 means
 // pin[0] is 0, pin[1] is active
-void md_init() {
-    md.dir[0] = 0;
-    md.speed[0] = 0;
-    md.freq[0] = 0;
-    md.pins[0] = 7;
-    md.pins[1] = 8;
+void md_init(_MD *self, uint16_t pin1, uint16_t pin2, _OC *oc1, _OC *oc2) {
+    self->dir = 0;
+    self->speed = 0;
+    self->freq = 0;
+    self->pins[0] = 7;
+    self->pins[1] = 8;
 
-    md.dir[1] = 0;
-    md.speed[1] = 0;
-    md.freq[1] = 0;
-    md.pins[2] = 5;
-    md.pins[3] = 6;
-
-    oc_pwm(&oc7, &D[md.pins[0]], NULL, 1e3, 0);
-    oc_pwm(&oc8, &D[md.pins[1]], NULL, 1e3, 0);
-    
-    oc_pwm(&oc5, &D[md.pins[2]], NULL, 1e3, 0);
-    oc_pwm(&oc6, &D[md.pins[3]], NULL, 1e3, 0);
+    oc_pwm(oc1, &D[self->pins[0]], NULL, 1e3, 0);
+    oc_pwm(oc2, &D[self->pins[1]], NULL, 1e3, 0);
 }
 
-void md_free() {
+void md_free(_MD *self) {
     // clear owned pins/oc's
 }
 
 // changes speed, direction unchanged
-void md_speed(uint16_t motor, uint16_t speed) {
-    motor -= 1;
+void md_speed(_MD *self, uint16_t speed) {
+    self->speed = speed;
 
-    md.speed[motor] = speed;
-
-    pin_write(&D[md.pins[md.dir[motor]+2*motor]], speed);
+    pin_write(&D[self->pins[self->dir]], speed);
 }
 
 // changes direction, speed unchanged
-void md_direction(uint16_t motor, uint16_t dir) {
-    motor -= 1;
-
-    if (md.dir[motor] == dir) {
+void md_direction(_MD *self, uint16_t dir) {
+    if (self->dir == dir) {
         return;
     }
-    md.dir[motor] = dir;
+    self->dir = dir;
 
-    uint16_t tmp = pin_read(&D[md.pins[dir+2*motor]]);
-    pin_write(&D[md.pins[dir+2*motor]],
-        pin_read(&D[md.pins[(!dir)+2*motor]]));
-    pin_write(&D[md.pins[(!dir)+2*motor]], tmp);
+    uint16_t tmp = pin_read(&D[self->pins[dir]]);
+    pin_write(&D[self->pins[dir]], pin_read(&D[self->pins[!dir]]));
+    pin_write(&D[self->pins[!dir]], tmp);
 }
 
 // changes speed and direction
-void md_velocity(uint16_t motor, uint16_t speed, uint16_t dir) {
-    md_speed(motor, speed);
-    md_direction(motor, dir);
+void md_velocity(_MD *self, uint16_t speed, uint16_t dir) {
+    md_speed(self, speed);
+    md_direction(self, dir);
 }
