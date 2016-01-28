@@ -37,13 +37,13 @@ typedef struct {
     uint8_t dir;
     uint16_t speed;
     uint16_t freq;
-    uint16_t pins[2];
+    _PIN *pins[2];
     _OC *oc;
 } _MD;
 
 extern _MD md1, md2;
 
-void md_init(_MD *self, uint16_t pin1, uint16_t pin2, uint16_t freq, _OC *oc);
+void md_init(_MD *self, _PIN *pin1, _PIN *pin2, uint16_t freq, _OC *oc);
 void md_free();
 
 void md_speed(_MD *self, uint16_t speed);
