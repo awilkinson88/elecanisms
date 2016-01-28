@@ -18,6 +18,8 @@ env.Program('joystick', ['joystick.c',
                       '../lib/timer.c',
                       '../lib/ui.c',
                       '../lib/pin.c',
-                      '../lib/spi.c'])
+                      '../lib/spi.c',
+                      '../lib/oc.c',
+                      '../lib/uart.c'])
 env.Hex('joystick')
 env.List('joystick')
