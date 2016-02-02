@@ -7,7 +7,7 @@
 #include "md.h"
 #include "timer.h"
 
-uint16_t direction = 0;
+uint8_t direction = 0;
 int16_t main(void) {
     init_clock();
     init_ui();
@@ -27,8 +27,8 @@ int16_t main(void) {
             timer_lower(&timer1);
             direction = !direction;
 
-            md_speed(&md1, 0x8000);
-            md_direction(&md1, direction);
+            md_speed(&mdp, 0x6000);
+            md_direction(&mdp, direction);
         }
     }
 }
