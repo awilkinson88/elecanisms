@@ -58,4 +58,6 @@ typedef union {
     uint8_t b[4];
 } WORD32;
 
+uint8_t parity(uint16_t v);
+
 #endif
