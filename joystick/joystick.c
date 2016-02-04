@@ -10,13 +10,14 @@
 #include "spi.h"
 #include "pin.h"
 #include "oc.h"
+#include "usb.h"
 
+#define HELLO       0   // Vendor request that prints "Hello World!"
+#define SET_VALS    1   // Vendor request that receives 2 unsigned integer values
+#define GET_VALS    2   // Vendor request that returns 2 unsigned integer values
+#define PRINT_VALS  3   // Vendor request that prints 2 unsigned integer values 
 
-//SPI pins
-// #define MOSI 0
-// #define MISO 1
-// #define SCLK 2
-// #define CS 3
+uint16_t val1, val2;
 
 _PIN *ENC_SCK, *ENC_MISO, *ENC_MOSI;
 _PIN *ENC_NCS;
@@ -36,6 +37,55 @@ WORD enc_readReg(WORD address) {
     result.b[0] = spi_transfer(&spi1, 0);
     pin_set(ENC_NCS);
     return result;
+}
+
+void VendorRequests(void) {
+    WORD temp;
+
+    switch (USB_setup.bRequest) {
+        case HELLO:
+            printf("Hello World!\n");
+            BD[EP0IN].bytecount = 0;    // set EP0 IN byte count to 0 
+            BD[EP0IN].status = 0xC8;    // send packet as DATA1, set UOWN bit
+            break;
+        case SET_VALS:
+            val1 = USB_setup.wValue.w;
+            val2 = USB_setup.wIndex.w;
+            BD[EP0IN].bytecount = 0;    // set EP0 IN byte count to 0 
+            BD[EP0IN].status = 0xC8;    // send packet as DATA1, set UOWN bit
+            break;
+        case GET_VALS:
+            temp.w = val1;
+            BD[EP0IN].address[0] = temp.b[0];
+            BD[EP0IN].address[1] = temp.b[1];
+            temp.w = val2;
+            BD[EP0IN].address[2] = temp.b[0];
+            BD[EP0IN].address[3] = temp.b[1];
+            BD[EP0IN].bytecount = 4;    // set EP0 IN byte count to 4
+            BD[EP0IN].status = 0xC8;    // send packet as DATA1, set UOWN bit
+            break;            
+        case PRINT_VALS:
+            printf("val1 = %u, val2 = %u\n", val1, val2);
+            BD[EP0IN].bytecount = 0;    // set EP0 IN byte count to 0
+            BD[EP0IN].status = 0xC8;    // send packet as DATA1, set UOWN bit
+            break;
+        default:
+            USB_error_flags |= 0x01;    // set Request Error Flag
+    }
+}
+
+void VendorRequestsIn(void) {
+    switch (USB_request.setup.bRequest) {
+        default:
+            USB_error_flags |= 0x01;                    // set Request Error Flag
+    }
+}
+
+void VendorRequestsOut(void) {
+    switch (USB_request.setup.bRequest) {
+        default:
+            USB_error_flags |= 0x01;                    // set Request Error Flag
+    }
 }
 
 
@@ -73,7 +123,7 @@ int16_t main(void) {
 
     led_on(&led1);//LED to tell if it is in run mode
 
-    timer_setPeriod(&timer2, 0.5);
+    // timer_setPeriod(&timer2, 0.5);
     timer_start(&timer2);
 
     ENC_MISO = &D[1];
@@ -88,17 +138,25 @@ int16_t main(void) {
     WORD address;
     WORD res;
     address.w = 0x3FFF;
-    double val;
+    float temp;
+    val2 = 0; 
+
+    InitUSB();                              // initialize the USB registers and serial interface engine
+    while (USB_USWSTAT!=CONFIG_STATE) {     // while the peripheral is not configured...
+        ServiceUSB();                       // ...service USB requests
+    }
 
     while (1) {
         if (timer_flag(&timer2)) {
             timer_lower(&timer2);
             res = enc_readReg(address);
-            val = 720*(res.i)/pow(2,14);
-            // printf("%i\r\n",val);
-            uart_putc(&uart1, res.b[0]);
+            temp = res.i;
+            val1 = 360.0*(temp)/pow(2,14);
+
         }
+        ServiceUSB();  
     }
+
 
     ///End SPI not working ----------------------------
 
