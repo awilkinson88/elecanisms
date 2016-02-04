@@ -14,17 +14,11 @@ list = Builder(action = 'xc16-objdump -S -D $SOURCE > $TARGET',
                src_suffix = 'elf')
 env.Append(BUILDERS = {'List' : list})
 
-env.Program('joystick', ['joystick.c',
+env.Program('test', ['test.c',
                       '../lib/timer.c',
                       '../lib/ui.c',
-                      '../lib/pin.c',
-                      '../lib/spi.c',
                       '../lib/oc.c',
-                      '../lib/uart.c',
-                      '../lib/common.c',
-                      '../lib/usb.c',
-                      '../lib/descriptors.c'])
-
-
-env.Hex('joystick')
-env.List('joystick')
+                      '../lib/md.c',
+                      '../lib/pin.c'])
+env.Hex('test')
+env.List('test')
