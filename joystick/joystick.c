@@ -95,8 +95,8 @@ int16_t main(void) {
             timer_lower(&timer2);
             res = enc_readReg(address);
             val = 720*(res.i)/pow(2,14);
-            // printf("%i\r\n",val);
-            uart_putc(&uart1, res.b[0]);
+            printf("%i\r\n",res.b);
+            // uart_putc(&uart1, 'k\n\r');
         }
     }
 
