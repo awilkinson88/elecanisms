@@ -7,7 +7,7 @@
 #include "md.h"
 #include "timer.h"
 
-uint8_t direction = 0;
+uint8_t direction = 1;
 int16_t main(void) {
     init_clock();
     init_ui();
@@ -19,7 +19,7 @@ int16_t main(void) {
     led_on(&led2);
     led_on(&led3);
 
-    timer_setPeriod(&timer1, 0.5);
+    timer_setPeriod(&timer1, 1);
     timer_start(&timer1);
 
     while (1) {
@@ -27,7 +27,7 @@ int16_t main(void) {
             timer_lower(&timer1);
             direction = !direction;
 
-            md_speed(&mdp, 0x8000);
+            md_speed(&mdp, 0xFFFF);
             md_direction(&mdp, direction);
         }
     }
