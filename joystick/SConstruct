@@ -23,6 +23,7 @@ env.Program('joystick', ['joystick.c',
                       '../lib/uart.c',
                       '../lib/common.c',
                       '../lib/usb.c',
+                      '../lib/md.c',
                       '../lib/descriptors.c'])
 
 

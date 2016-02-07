@@ -11,6 +11,8 @@
 #include "pin.h"
 #include "oc.h"
 #include "usb.h"
+#include "md.h"
+
 
 #define HELLO       0   // Vendor request that prints "Hello World!"
 #define SET_VALS    1   // Vendor request that receives 2 unsigned integer values
@@ -97,33 +99,12 @@ int16_t main(void) {
     init_pin();
     init_uart();
     init_timer();
-
-    ////Motor code ---------------------------
-
-    // oc_pwm(&oc1, &D[8], &timer2, 2000, .9);
-    
-//     pin_digitalOut(&D[6]);
-//     pin_digitalOut(&D[7]);
-//     pin_digitalOut(&D[8]);
-//     pin_digitalOut(&D[5]);
-
-//     while (1){
-//     led_on(&led1);//LED to tell if it is in run mod
-//     pin_set(&D[6]);
-//     pin_set(&D[7]);
-//     pin_clear(&D[8]);
-//     pin_clear(&D[5]);
-// }
-
-    ///End Motor code ------------------------
-
-
-    ///SPI not working ----------------------
+    init_md();
 
 
     led_on(&led1);//LED to tell if it is in run mode
 
-    // timer_setPeriod(&timer2, 0.5);
+    timer_setPeriod(&timer2, 0.5);
     timer_start(&timer2);
 
     ENC_MISO = &D[1];
@@ -147,13 +128,14 @@ int16_t main(void) {
     }
 
     while (1) {
-        if (timer_flag(&timer2)) {
+        // if (timer_flag(&timer2)) {
             timer_lower(&timer2);
+            md_speed(&mdp, 0xFFF0);
+            md_direction(&mdp, 1);
             res = enc_readReg(address);
             temp = res.i;
             val1 = 360.0*(temp)/pow(2,14);
-
-        }
+        // }
         ServiceUSB();  
     }
 
