@@ -25,6 +25,11 @@ uint16_t val1, val2, prevVal1;
 _PIN *ENC_SCK, *ENC_MISO, *ENC_MOSI;
 _PIN *ENC_NCS;
 
+typedef struct {
+    uint16_t angle;
+    uint16_t fraction;
+} Float16;
+
 WORD enc_readReg(WORD address) {
     WORD cmd, result;
     cmd.w = 0x4000|address.w; //set 2nd MSB to 1 for a read
@@ -91,11 +96,46 @@ void VendorRequestsOut(void) {
     }
 }
 
-// int16_t convAngle(int16_t motAngle){
+// Gear ratio = 1/4.7
+Float16 *gearRatio; 
+gearRatio->angle = 0b000000000; // 9 MSB = integer portion
+gearRatio->fraction = 0b0011011; // 7 LSB = fraction portion
+// 4=0b0000000010000000
+// 0.7=0b0000001001011010
+// 1/4.7=0b0000000000011011
 
+int16_t convAngle(int16_t currVal, int16_t prevVal){
 
+    // // Concatenate integer and fraction portions of counter
+    // uint16_t shaftInt = (shaftAng->angle << 7) || shaftAng->fraction;
 
-// };
+    // Concatenate integer and fraction portions of gearRatio
+    // uint16_t gearInt = (gearRatio->angle << 7) || gearRatio->fraction;
+    uint16_t gearInt = gearRatio->angle;
+
+    // Generate shifted versions of currVal and prevVal
+    uint16_t shiftCurr = currVal << 7;
+    uint16_t shiftPrev = prevVal << 7;
+
+    int16_t counter;//change this to int!
+    //to use "floats" bit shift by one place and divide by 2
+    ///Might need to handle cases where it jumps more than a single deg
+    
+    // Transition from 0 to 359 => increment shaft by negative one
+    if (prevVal=0 && currVal=359){
+        counter = -gearInt; // -1/4.7
+    }
+    // Transition from 359 to 0 => increment shaft by positive one
+    else if (prevVal=359 && currVal=0){
+        counter = gearInt; // +1/4.7
+        }
+    // Otherwise => add difference b/n curr and prev value
+    else{
+        counter = (shiftCurr - shiftPrev)*gearInt; //scale factor
+        }
+    }
+    return counter;    
+};
 
 
 int16_t main(void) {
@@ -108,6 +148,7 @@ int16_t main(void) {
     init_timer();
     init_md();
 
+    uint16_t ShaftAng = 0;
 
     led_on(&led1);//LED to tell if it is in run mode
 
@@ -147,17 +188,8 @@ int16_t main(void) {
         res = enc_readReg(address);
         temp = res.i;
         val1 = 360.0*(temp)/pow(2,14);
-        if (val1 > prevVal1){
-            val2 = 1;
-        }
-        else if (val1 < prevVal1){
-            val2 = 2;
-        }
-
-        else if (val1 = prevVal1) {
-            val2 = 0;
-        }
-
+        shaftAng = shaftAng+convAngle(val1, prevVal1);        
+        val2 = shaftAng;
         ServiceUSB(); 
         prevVal1 = val1; 
     }
