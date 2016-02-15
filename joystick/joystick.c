@@ -91,6 +91,12 @@ void VendorRequestsOut(void) {
     }
 }
 
+// int16_t convAngle(int16_t motAngle){
+
+
+
+// };
+
 
 int16_t main(void) {
     init_clock();
