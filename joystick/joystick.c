@@ -20,7 +20,7 @@
 #define PRINT_VALS  3   // Vendor request that prints 2 unsigned integer values 
 
 uint8_t direction = 1;
-uint16_t val1, val2, prevVal1;
+uint16_t val1, val2, prevVal1, setPoint;
 
 _PIN *ENC_SCK, *ENC_MISO, *ENC_MOSI;
 _PIN *ENC_NCS;
@@ -152,7 +152,7 @@ int16_t main(void) {
 
     led_on(&led1);//LED to tell if it is in run mode
 
-    timer_setPeriod(&timer2, .25);
+    timer_setPeriod(&timer2, .001);
     timer_start(&timer2);
 
     ENC_MISO = &D[1];
@@ -168,32 +168,37 @@ int16_t main(void) {
     WORD res;
     address.w = 0x3FFF;
     float temp;
-    val2 = 0; 
+    uint
+
+    val2 = 90<<7;
 
     InitUSB();                              // initialize the USB registers and serial interface engine
     while (USB_USWSTAT!=CONFIG_STATE) {     // while the peripheral is not configured...
         ServiceUSB();                       // ...service USB requests
     }
 
-    md_speed(&mdp, 0xA000);
+    // md_speed(&mdp, 0xA000);
 
     while (1) {
-        if (timer_flag(&timer2)) {
-            timer_lower(&timer2);
-            md_brake(&mdp);
-            direction = !direction;
-            md_speed(&mdp, 0xA000);
-            md_direction(&mdp, direction);
-        }
         res = enc_readReg(address);
         temp = res.i;
         // val1 = current motor shaft angle
         val1 = 360.0*(temp)/pow(2,14);
         // val2 = output shaft angle counter
         // 9 MSB = int, 7 LSB = fraction
-        val2 = val2+(convAngle(val1, prevVal1)>>7);        
+        val2 = val2+(convAngle(val1, prevVal1)>>7);       
         ServiceUSB();
         // store previous value of motor shaft to determine direction
-        prevVal1 = val1; 
+        prevVal1 = val1;
+
+        // Motor driver control
+        // if (timer_flag(&timer2)) {
+        //     timer_lower(&timer2);
+        //     md_brake(&mdp);
+        //     direction = !direction;
+        //     // 75% speed
+        //     md_speed(&mdp, 0xA000);
+        //     md_direction(&mdp, direction);
+        // }
     }
 }

@@ -19,4 +19,15 @@ counter = 0
 while(1):
 	[val1,val2] = test.get_vals()
 	# res.append(val1)
-	print val1,val2
+	frac=0
+	for i in range(0,7):
+		check = (val2 >> i) & 1
+		den = 2.0**(7-i)
+		# print i, check, bin(den)
+		if (check):
+			frac += 1.0/den
+
+	# frac = val2 & 127
+	whole = val2 >> 7
+	valShift = val2
+	print whole,frac
