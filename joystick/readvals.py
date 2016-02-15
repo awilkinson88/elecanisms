@@ -10,14 +10,14 @@ res = []
 counter = 0
 start = time.time()
 
-while(counter != 1000):
+while(counter != 3000):
 	[val1,val2] = test.get_vals()
-	res.append(val1)
+	res.append(val2)
 	counter += 1
 
 end = time.time()
 elapsed = end - start
-time_vec = np.linspace(0,elapsed,1000)
+time_vec = np.linspace(0,elapsed,3000)
 x = np.array(res)
 deriv = np.diff(x)
 # plt.plot(time_vec[1:],deriv)

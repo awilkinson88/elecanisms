@@ -19,7 +19,8 @@
 #define GET_VALS    2   // Vendor request that returns 2 unsigned integer values
 #define PRINT_VALS  3   // Vendor request that prints 2 unsigned integer values 
 
-uint16_t val1, val2;
+uint8_t direction = 1;
+uint16_t val1, val2, prevVal1;
 
 _PIN *ENC_SCK, *ENC_MISO, *ENC_MOSI;
 _PIN *ENC_NCS;
@@ -104,7 +105,7 @@ int16_t main(void) {
 
     led_on(&led1);//LED to tell if it is in run mode
 
-    timer_setPeriod(&timer2, 0.5);
+    timer_setPeriod(&timer2, .25);
     timer_start(&timer2);
 
     ENC_MISO = &D[1];
@@ -127,20 +128,31 @@ int16_t main(void) {
         ServiceUSB();                       // ...service USB requests
     }
 
+    md_speed(&mdp, 0xA000);
+
     while (1) {
-        // if (timer_flag(&timer2)) {
+        if (timer_flag(&timer2)) {
             timer_lower(&timer2);
-            md_speed(&mdp, 0xFFF0);
-            md_direction(&mdp, 1);
-            res = enc_readReg(address);
-            temp = res.i;
-            val1 = 360.0*(temp)/pow(2,14);
-        // }
-        ServiceUSB();  
+            md_brake(&mdp);
+            direction = !direction;
+            md_speed(&mdp, 0xA000);
+            md_direction(&mdp, direction);
+        }
+        res = enc_readReg(address);
+        temp = res.i;
+        val1 = 360.0*(temp)/pow(2,14);
+        if (val1 > prevVal1){
+            val2 = 1;
+        }
+        else if (val1 < prevVal1){
+            val2 = 2;
+        }
+
+        else if (val1 = prevVal1) {
+            val2 = 0;
+        }
+
+        ServiceUSB(); 
+        prevVal1 = val1; 
     }
-
-
-    ///End SPI not working ----------------------------
-
 }
-
