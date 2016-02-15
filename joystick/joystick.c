@@ -25,10 +25,10 @@ uint16_t val1, val2, prevVal1;
 _PIN *ENC_SCK, *ENC_MISO, *ENC_MOSI;
 _PIN *ENC_NCS;
 
-typedef struct {
+struct Float16 {
     uint16_t angle;
     uint16_t fraction;
-} Float16;
+};
 
 WORD enc_readReg(WORD address) {
     WORD cmd, result;
@@ -46,6 +46,15 @@ WORD enc_readReg(WORD address) {
     pin_set(ENC_NCS);
     return result;
 }
+
+// // Gear ratio = 1/4.7
+// Float16 gearRatio; 
+// gearRatio.angle = 0b000000000; // 9 MSB = integer portion
+// gearRatio.fraction = 0b0011011; // 7 LSB = fraction portion
+// // 4=0b0000000010000000
+// // 0.7=0b0000001001011010
+// // 1/4.7=0b0000000000011011
+
 
 void VendorRequests(void) {
     WORD temp;
@@ -96,22 +105,16 @@ void VendorRequestsOut(void) {
     }
 }
 
-// Gear ratio = 1/4.7
-Float16 *gearRatio; 
-gearRatio->angle = 0b000000000; // 9 MSB = integer portion
-gearRatio->fraction = 0b0011011; // 7 LSB = fraction portion
-// 4=0b0000000010000000
-// 0.7=0b0000001001011010
-// 1/4.7=0b0000000000011011
-
 int16_t convAngle(int16_t currVal, int16_t prevVal){
 
-    // // Concatenate integer and fraction portions of counter
-    // uint16_t shaftInt = (shaftAng->angle << 7) || shaftAng->fraction;
+    // Convert motor shaft angle to output shaft angle
+    // Since the largest shaft angle is 360, only 9 bits are needed
+    // to represent the integer portion. In this function, integer
+    // values are bit-shifted by 7, and the 7 LSB represent the fractional
+    // portion of the value
 
-    // Concatenate integer and fraction portions of gearRatio
-    // uint16_t gearInt = (gearRatio->angle << 7) || gearRatio->fraction;
-    uint16_t gearInt = gearRatio->angle;
+    // Generate gearInt = 1/4.7 (assuming 7LSB represent fraction)
+    uint16_t gearInt = 0b0000000000011011;
 
     // Generate shifted versions of currVal and prevVal
     uint16_t shiftCurr = currVal << 7;
@@ -122,19 +125,18 @@ int16_t convAngle(int16_t currVal, int16_t prevVal){
     ///Might need to handle cases where it jumps more than a single deg
     
     // Transition from 0 to 359 => increment shaft by negative one
-    if (prevVal=0 && currVal=359){
+    if (prevVal==0 && currVal==359){
         counter = -gearInt; // -1/4.7
     }
     // Transition from 359 to 0 => increment shaft by positive one
-    else if (prevVal=359 && currVal=0){
+    else if (prevVal==359 && currVal==0){
         counter = gearInt; // +1/4.7
         }
     // Otherwise => add difference b/n curr and prev value
     else{
         counter = (shiftCurr - shiftPrev)*gearInt; //scale factor
         }
-    }
-    return counter;    
+    return counter;
 };
 
 
@@ -147,8 +149,6 @@ int16_t main(void) {
     init_uart();
     init_timer();
     init_md();
-
-    uint16_t ShaftAng = 0;
 
     led_on(&led1);//LED to tell if it is in run mode
 
@@ -187,10 +187,13 @@ int16_t main(void) {
         }
         res = enc_readReg(address);
         temp = res.i;
+        // val1 = current motor shaft angle
         val1 = 360.0*(temp)/pow(2,14);
-        shaftAng = shaftAng+convAngle(val1, prevVal1);        
-        val2 = shaftAng;
-        ServiceUSB(); 
+        // val2 = output shaft angle counter
+        // 9 MSB = int, 7 LSB = fraction
+        val2 = val2+(convAngle(val1, prevVal1)>>7);        
+        ServiceUSB();
+        // store previous value of motor shaft to determine direction
         prevVal1 = val1; 
     }
 }
