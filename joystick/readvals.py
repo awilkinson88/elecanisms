@@ -12,7 +12,20 @@ start = time.time()
 
 while(counter != 3000):
 	[val1,val2] = test.get_vals()
-	res.append(val2)
+	# convert int to float
+	frac=0
+	for i in range(0,7):
+		check = (val2 >> i) & 1
+		den = 2.0**(7-i)
+		# print i, check, bin(den)
+		if (check):
+			frac += 1.0/den
+
+	frac = val2 & 127
+	whole = val2 >> 7
+	valShift = val2
+	# append whole number + fraction
+	res.append(whole)
 	counter += 1
 
 end = time.time()
@@ -22,6 +35,7 @@ x = np.array(res)
 deriv = np.diff(x)
 # plt.plot(time_vec[1:],deriv)
 plt.plot(time_vec,x)
+plt.title('Motor Angle: Proportional Control')
 plt.ylabel('Position (deg)')
 plt.xlabel('Time (s)')
 plt.show()

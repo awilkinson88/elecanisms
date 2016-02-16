@@ -27,7 +27,8 @@ while(1):
 		if (check):
 			frac += 1.0/den
 
-	# frac = val2 & 127
+	frac = val2 & 127
 	whole = val2 >> 7
 	valShift = val2
-	print whole,frac
+	# print val2,bin(val2),bin(whole)
+	print val2

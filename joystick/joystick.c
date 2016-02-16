@@ -19,8 +19,21 @@
 #define GET_VALS    2   // Vendor request that returns 2 unsigned integer values
 #define PRINT_VALS  3   // Vendor request that prints 2 unsigned integer values 
 
+// State Table:
+// 0 = Spring (Simple Position Proportional Control)
+// 1 = Damper (Speed Proportional Control)
+// 2 = Texture (Random drive vals while output shaft is moving)
+// 3 = Wall (Drive Motor HIGH whenever outside an envelope of angle vals)
+uint8_t state = 0;
+
 uint8_t direction = 1;
-uint16_t val1, val2, prevVal1, setPoint;
+uint16_t val1, val2, prevVal1, angOut, speed;
+uint16_t setPoint = 90<<7;
+// proportional constant
+uint16_t Kp = 770;
+// difference between setpoint and current shaft angle
+int16_t setDiff;
+
 
 _PIN *ENC_SCK, *ENC_MISO, *ENC_MOSI;
 _PIN *ENC_NCS;
@@ -168,9 +181,8 @@ int16_t main(void) {
     WORD res;
     address.w = 0x3FFF;
     float temp;
-    uint
 
-    val2 = 90<<7;
+    angOut = 90<<7;
 
     InitUSB();                              // initialize the USB registers and serial interface engine
     while (USB_USWSTAT!=CONFIG_STATE) {     // while the peripheral is not configured...
@@ -186,19 +198,51 @@ int16_t main(void) {
         val1 = 360.0*(temp)/pow(2,14);
         // val2 = output shaft angle counter
         // 9 MSB = int, 7 LSB = fraction
-        val2 = val2+(convAngle(val1, prevVal1)>>7);       
+        
+        angOut = angOut+(convAngle(val1, prevVal1)>>7);       
+        setDiff = setPoint - angOut;
+        // val2 = angOut;
         ServiceUSB();
         // store previous value of motor shaft to determine direction
         prevVal1 = val1;
 
+
         // Motor driver control
-        // if (timer_flag(&timer2)) {
-        //     timer_lower(&timer2);
-        //     md_brake(&mdp);
-        //     direction = !direction;
-        //     // 75% speed
-        //     md_speed(&mdp, 0xA000);
-        //     md_direction(&mdp, direction);
-        // }
+        if (timer_flag(&timer2)) {
+            timer_lower(&timer2);
+        
+            switch (state) {
+                case 0:
+                    // Virtual Spring
+                    if (setDiff == 0 ) {
+                        md_brake(&mdp);
+                    }
+                    else if (setDiff > 0) {
+                        // ***FIX THIS*** //
+                        setDiff = Kp*setDiff;
+                        md_direction(&mdp, 1);
+                        md_speed(&mdp, setDiff);
+                        val2 = setDiff;
+                    }
+                    else {
+                        // ***FIX THIS*** //
+                        setDiff = Kp*abs(setDiff);
+                        md_direction(&mdp, 0);
+                        md_speed(&mdp, setDiff);
+                        val2=setDiff;
+                    }
+                case 1:
+                    // Virtual Damper
+                    break;
+
+                case 2:
+                    // Virtual Texture
+                    break;
+
+                case 3:
+                    // Virtual Wall
+                    break;
+            }
+        }
     }
 }
