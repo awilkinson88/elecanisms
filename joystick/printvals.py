@@ -31,4 +31,4 @@ while(1):
 	whole = val2 >> 7
 	valShift = val2
 	# print val2,bin(val2),bin(whole)
-	print val2
+	print val1, val2
