@@ -14,10 +14,8 @@
 #include "md.h"
 
 
-#define HELLO       0   // Vendor request that prints "Hello World!"
-#define SET_VALS    1   // Vendor request that receives 2 unsigned integer values
-#define GET_VALS    2   // Vendor request that returns 2 unsigned integer values
-#define PRINT_VALS  3   // Vendor request that prints 2 unsigned integer values 
+#define SET_VALS    0   // Vendor request that receives 2 unsigned integer values
+#define GET_VALS    1   // Vendor request that returns 2 unsigned integer values 
 
 // State Table:
 // 0 = Spring (Simple Position Proportional Control)
@@ -70,16 +68,9 @@ WORD enc_readReg(WORD address) {
 
 void VendorRequests(void) {
     WORD temp;
-
     switch (USB_setup.bRequest) {
-        case HELLO:
-            printf("Hello World!\n");
-            BD[EP0IN].bytecount = 0;    // set EP0 IN byte count to 0 
-            BD[EP0IN].status = 0xC8;    // send packet as DATA1, set UOWN bit
-            break;
         case SET_VALS:
-            val1 = USB_setup.wValue.w;
-            val2 = USB_setup.wIndex.w;
+            state = USB_setup.wValue.w;
             BD[EP0IN].bytecount = 0;    // set EP0 IN byte count to 0 
             BD[EP0IN].status = 0xC8;    // send packet as DATA1, set UOWN bit
             break;
@@ -93,11 +84,6 @@ void VendorRequests(void) {
             BD[EP0IN].bytecount = 4;    // set EP0 IN byte count to 4
             BD[EP0IN].status = 0xC8;    // send packet as DATA1, set UOWN bit
             break;            
-        case PRINT_VALS:
-            printf("val1 = %u, val2 = %u\n", val1, val2);
-            BD[EP0IN].bytecount = 0;    // set EP0 IN byte count to 0
-            BD[EP0IN].status = 0xC8;    // send packet as DATA1, set UOWN bit
-            break;
         default:
             USB_error_flags |= 0x01;    // set Request Error Flag
     }
@@ -203,71 +189,87 @@ int16_t main(void) {
         setDiff = setPoint - angOut;
         // val2 = angOut;
         ServiceUSB();
+        // store previous value of motor shaft to determine direction
+        prevVal1 = val1;
         // Motor driver control
-        // if (timer_flag(&timer2)) {
-        //     timer_lower(&timer2);
-        
-            switch (state) {
-                case 0:
-                    // Virtual Spring
-                    if (abs(setDiff) < epsilon ) {
-                        md_brake(&mdp);
-                    }
-                    else if (setDiff > 0) {
-                        // ***FIX THIS*** //
-                        setDiff = Kp*setDiff;
-                        md_direction(&mdp, 1);
-                        if (setDiff < 5*epsilon) {
-                            md_speed(&mdp, setDiff);
-                        }
-                        else {
-                            md_speed(&mdp, 0xFFF0);
-                        }
-                        val2 = setDiff;
-                    }
-                    else {
-                        // ***FIX THIS*** //
-                        setDiff = Kp*abs(setDiff);
-                        md_direction(&mdp, 0);
-                        if (setDiff < 5*epsilon) {
-                            md_speed(&mdp, setDiff);
-                        }
-                        else {
-                            md_speed(&mdp, 0xFFF0);
-                        }
-                        val2=setDiff;
-                    }
-                    break;
-                case 1:
-                    // Virtual Damper
-                    // Change motor drive PWM based on magnitude of val1 and prevVal
-                    speed = prevAng - angOut;
-                    if (speed == 0) {
-                        md_brake(&mdp);
-                    }
-                    else if (speed > 0) {
-                        speed=Kdamp*speed;
-                        md_direction(&mdp, 1);
-                        md_speed(&mdp, speed);
-                    }
-                    else {
-                        speed=Kdamp*abs(speed);
-                        md_direction(&mdp, 0);
-                        md_speed(&mdp, speed);
-                    }
-                    val2=speed;
-                    break;
-                case 2:
-                    // Virtual Texture
-                    break;
+        switch (state) {
+            case 0:
+                // Virtual Spring
+                if (setDiff == 0 ) {
+                    md_brake(&mdp);
+                }
+                else if (setDiff > 0) {
+                    // ***FIX THIS*** //
+                    setDiff = Kp*setDiff;
+                    md_direction(&mdp, 1);
+                    md_speed(&mdp, setDiff);
+                    val2 = setDiff;
+                }
+                else {
+                    // ***FIX THIS*** //
+                    setDiff = Kp*abs(setDiff);
+                    md_direction(&mdp, 0);
+                    md_speed(&mdp, setDiff);
+                    val2=setDiff;
+                }
+            case 1:
+                // Virtual Damper
+                // Change motor drive PWM based on magnitude of val1 and prevVal
+                speed = prevAng - angOut;
+                if (speed == 0) {
+                    md_brake(&mdp);
+                }
+                else if (speed > 0) {
+                    speed=Kdamp*speed;
+                    md_direction(&mdp, 1);
+                    md_speed(&mdp, speed);
+                }
+                else {
+                    speed=Kdamp*abs(speed);
+                    md_direction(&mdp, 0);
+                    md_speed(&mdp, speed);
+                }
+                val2=speed;
+                break;
 
-                case 3:
-                    // Virtual Wall
-                    break;
-            }
-            // store previous value of motor shaft to determine direction
-            prevVal1 = val1;
-            prevAng = angOut;
+            case 2:
+                //Virtual Texture
+                if(angOut <= 20<<7){
+                    md_direction(&mdp,1);
+                    md_speed(&mdp, 0x000);
+                }
+                else if(angOut <= 65<<7 && angOut > 20<<7){
+                    md_direction(&mdp,1);
+                    md_speed(&mdp, 0xFFFF);
+                }
+                else if(angOut <= 80<<7 && angOut > 65<<7){
+                    md_direction(&mdp,0);
+                    md_speed(&mdp, 0xA000);
+                }
+                else if(angOut <= 130<<7 && angOut > 80<<7){
+                    md_direction(&mdp,1);
+                    md_speed(&mdp, 0x0000);
+                }
+                else if(angOut <= 150<<7 && angOut > 130<<7){
+                    md_direction(&mdp,1);
+                    md_speed(&mdp, 0x8000);
+                }
+                else if(angOut > 150<<7){
+                    md_direction(&mdp,0);
+                    md_speed(&mdp, 0xFFFF);
+                }
+                break;
+
+            case 3:
+                //Virtual Wall
+                if(angOut > 150<<7){
+                    md_direction(&mdp,0);
+                    md_speed(&mdp, 0xFFFF);
+                }
+                else {
+                    md_speed(&mdp, 0x0000);
+                    }
+                break;
         }
     // }
 }
