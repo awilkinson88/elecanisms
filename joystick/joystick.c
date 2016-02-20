@@ -22,7 +22,7 @@
 // 1 = Damper (Speed Proportional Control)
 // 2 = Texture (Random drive vals while output shaft is moving)
 // 3 = Wall (Drive Motor HIGH whenever outside an envelope of angle vals)
-uint8_t state = 1;
+uint8_t state = 0;
 
 uint8_t direction = 1;
 uint16_t val1, val2, prevVal1, angOut, prevAng;
@@ -187,30 +187,31 @@ int16_t main(void) {
         angOut = angOut+(convAngle(val1, prevVal1)>>7);
         // val2=angOut;       
         setDiff = setPoint - angOut;
-        // val2 = angOut;
+        int16_t current = __analogRead(&A[1]);
+        val2 = current;
         ServiceUSB();
         // store previous value of motor shaft to determine direction
         prevVal1 = val1;
         // Motor driver control
         switch (state) {
             case 0:
-                // Virtual Spring
+                 // Virtual Spring
                 if (setDiff == 0 ) {
-                    md_brake(&mdp);
+                    md_speed(&md2,0x0000);
                 }
                 else if (setDiff > 0) {
                     // ***FIX THIS*** //
                     setDiff = Kp*setDiff;
-                    md_direction(&mdp, 1);
-                    md_speed(&mdp, setDiff);
-                    val2 = setDiff;
+                    md_direction(&md2, 1);
+                    md_speed(&md2, setDiff);
+                    // val2 = setDiff;
                 }
                 else {
                     // ***FIX THIS*** //
                     setDiff = Kp*abs(setDiff);
-                    md_direction(&mdp, 0);
-                    md_speed(&mdp, setDiff);
-                    val2=setDiff;
+                    md_direction(&md2, 0);
+                    md_speed(&md2, setDiff);
+                    // val2=setDiff;
                 }
             case 1:
                 // Virtual Damper
@@ -229,7 +230,7 @@ int16_t main(void) {
                     md_direction(&mdp, 0);
                     md_speed(&mdp, speed);
                 }
-                val2=speed;
+                // val2=speed;
                 break;
 
             case 2:
@@ -262,7 +263,7 @@ int16_t main(void) {
 
             case 3:
                 //Virtual Wall
-                if(angOut > 150<<7){
+                if(angOut > 120<<7){
                     md_direction(&mdp,0);
                     md_speed(&mdp, 0xFFFF);
                 }
@@ -271,5 +272,5 @@ int16_t main(void) {
                     }
                 break;
         }
-    // }
+    }
 }

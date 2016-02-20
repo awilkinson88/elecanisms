@@ -10,7 +10,7 @@ res = []
 counter = 0
 start = time.time()
 
-while(counter != 3000):
+while(counter != 4000):
 	[val1,val2] = test.get_vals()
 	# convert int to float
 	frac=0
@@ -35,7 +35,7 @@ x = np.array(res)
 deriv = np.diff(x)
 # plt.plot(time_vec[1:],deriv)
 plt.plot(time_vec,x)
-plt.title('Motor Angle: Proportional Control')
-plt.ylabel('Position (deg)')
+plt.title('Virtual Wall')
+plt.ylabel('Shaft Position (deg)')
 plt.xlabel('Time (s)')
 plt.show()
