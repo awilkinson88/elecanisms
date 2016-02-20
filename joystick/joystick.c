@@ -25,7 +25,7 @@
 uint8_t state = 0;
 
 uint8_t direction = 1;
-uint16_t val1, val2, prevVal1, angOut, prevAng;
+uint16_t val1, val2, prevVal1, angOut, prevAng, motval1;
 uint16_t setPoint = 90<<7;
 // proportional constant
 uint16_t Kp = 7.5;
@@ -180,18 +180,19 @@ int16_t main(void) {
         res = enc_readReg(address);
         temp = res.i;
         // val1 = current motor shaft angle
-        val1 = 360.0*(temp)/pow(2,14);
+        motval1 = 360.0*(temp)/pow(2,14);
         // val2 = output shaft angle counter
         // 9 MSB = int, 7 LSB = fraction
         
-        angOut = angOut+(convAngle(val1, prevVal1)>>7);
+        angOut = angOut+(convAngle(motval1, prevVal1)>>7);
+        val1 = angOut;
         // val2=angOut;       
         setDiff = setPoint - angOut;
         int16_t current = __analogRead(&A[1]);
         val2 = current;
         ServiceUSB();
         // store previous value of motor shaft to determine direction
-        prevVal1 = val1;
+        prevVal1 = motval1;
         // Motor driver control
         switch (state) {
             case 0:
@@ -234,7 +235,7 @@ int16_t main(void) {
                 break;
 
             case 2:
-                //Virtual Texture
+                //Virtual Textureit 
                 if(angOut <= 20<<7){
                     md_direction(&mdp,1);
                     md_speed(&mdp, 0x000);
